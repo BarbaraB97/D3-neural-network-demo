@@ -5,7 +5,7 @@
 <head>
         <meta charset="utf-8">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-        <titile><h1>D3 Neural network demo</h1></titile>
+         <titile><h1>D3 Neural network demo</h1></titile>
 
 </head>
 
@@ -117,11 +117,16 @@
                         console.log(data);
                     
                         
-                        d3.json("data.json", function(error, graph) {
-                            var nodes = graph.nodes;
-                        
-                            // get network size
-                            var netsize = {};
+                        var graph = {
+			        "nodes": []
+		        };
+                        graph.nodes = data;
+
+                        console.log(graph.nodes);
+
+                        var nodes = data;
+
+                        var netsize = {};
                             nodes.forEach(function (d) {
                               if(d.layer in netsize) {
                                   netsize[d.layer] += 1;
@@ -182,7 +187,6 @@
                                 .attr("dx", "-.35em")
                                 .attr("dy", ".35em")
                                 .text(function(d) { return d.label; });
-                        });
 
                         }
                         
