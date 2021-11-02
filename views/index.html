@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+        <titile><h1>D3 Neural network demo</h1></titile>
+
+</head>
+
+
+<style>
+
+                text {
+                  pointer-events: none;
+                }
+                
+                .node:hover {
+                  stroke: #999;
+                  stroke-opacity: .6;
+                  stroke-width: 4px;
+                }
+                
+                .link {
+                  stroke: #999;
+                  stroke-opacity: .6;
+                }
+                
+</style>
+
+<body>
+        <form>
+                <div class="form-group">
+                        <label>Number of input layers</label>
+                        <input type="inputLayers" id="inputLayers"  placeholder="Enter input layers" onchange="readInput()">
+                </div>
+                <div class="form-group">
+                        <label>Number of hidden layers</label>
+                        <input type="hiddenLayers" id="hiddenLayers"  placeholder="Enter hidden layers" onchange="readHidden()">
+                </div>
+                <div class="form-group">
+                        <label>Number of output layers</label>
+                        <input type="outputLayers" id="outputLayers"  placeholder="Enter output layers" onchange="readOutput()">
+                </div>
+        </form>
+        <button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off" onclick="createNetwork()">Generate neural network</button>
+
+
+
+        <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+        <script>
+                function readInput() {
+                        var input = document.getElementById("inputLayers").value;
+                        console.log(input);
+                        return input;
+                }
+                function readHidden() {
+                        var hidden = document.getElementById("hiddenLayers").value;
+                        console.log(hidden);
+                        return hidden;
+                }
+                function readOutput() {
+                        var output = document.getElementById("outputLayers").value;
+                        console.log(output);
+                        return output;
+                }
+
+
+
+        </script>
+        <script>
+                        function createNetwork(){
+                                var width = 960,
+                            height = 500,
+                            nodeSize = 30;
+                        
+                        var color = d3.scale.category20();
+                        
+                        var svg = d3.select("body").append("svg")
+                            .attr("width", width)
+                            .attr("height", height);
+                        
+                        
+                        const inputNodes = readInput();
+                        const hiddenNodes = readHidden();
+                        const outputNodes = readOutput();
+                        
+                        console.log(inputNodes);
+                        var data = [];
+                        for(let i=0; i<inputNodes; i++){
+                                data.push({
+                                        label: "i" + i,
+                                        layer: 1
+                                })
+                        }
+                        console.log(data);
+                        for(let i=0; i<hiddenNodes; i++){
+                                data.push({
+                                        label: "h" + i,
+                                        layer: 2
+                                })
+                        }
+                        console.log(data);
+                        for(let i=0; i<outputNodes; i++){
+                                data.push({
+                                        label: "o" + i,
+                                        layer: 3
+                                })
+                        }
+                        console.log(data);
+                    
+                        
+                        d3.json("data.json", function(error, graph) {
+                            var nodes = graph.nodes;
+                        
+                            // get network size
+                            var netsize = {};
+                            nodes.forEach(function (d) {
+                              if(d.layer in netsize) {
+                                  netsize[d.layer] += 1;
+                              } else {
+                                  netsize[d.layer] = 1;
+                              }
+                              d["lidx"] = netsize[d.layer];
+                            });
+                        
+                            // calc distances between nodes
+                            var largestLayerSize = Math.max.apply(
+                                null, Object.keys(netsize).map(function (i) { return netsize[i]; }));
+                        
+                            var xdist = width / Object.keys(netsize).length,
+                                ydist = height / largestLayerSize;
+                        
+                            // create node locations
+                            nodes.map(function(d) {
+                              d["x"] = (d.layer - 0.5) * xdist;
+                              d["y"] = (d.lidx - 0.5) * ydist;
+                            });
+                        
+                            // autogenerate links
+                            var links = [];
+                            nodes.map(function(d, i) {
+                              for (var n in nodes) {
+                                if (d.layer + 1 == nodes[n].layer) {
+                                  links.push({"source": parseInt(i), "target": parseInt(n), "value": 1}) }
+                              }
+                            }).filter(function(d) { return typeof d !== "undefined"; });
+                        
+                            // draw links
+                            var link = svg.selectAll(".link")
+                                .data(links)
+                              .enter().append("line")
+                                .attr("class", "link")
+                                .attr("x1", function(d) { return nodes[d.source].x; })
+                                .attr("y1", function(d) { return nodes[d.source].y; })
+                                .attr("x2", function(d) { return nodes[d.target].x; })
+                                .attr("y2", function(d) { return nodes[d.target].y; })
+                                .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+                        
+                            // draw nodes
+                            var node = svg.selectAll(".node")
+                                .data(nodes)
+                              .enter().append("g")
+                                .attr("transform", function(d) {
+                                    return "translate(" + d.x + "," + d.y + ")"; }
+                                );
+                        
+                            var circle = node.append("circle")
+                                .attr("class", "node")
+                                .attr("r", nodeSize)
+                                .style("fill", function(d) { return color(d.layer); });
+                        
+                        
+                            node.append("text")
+                                .attr("dx", "-.35em")
+                                .attr("dy", ".35em")
+                                .text(function(d) { return d.label; });
+                        });
+
+                        }
+                        
+                        </script>         
+</body>
+                
+                
+</html>
+
+
